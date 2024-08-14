@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "name": "Medicare_Data",
+            "accessMode": "Read Only",
+            "previewLimit": 50,
+            "driver": "DuckDB",
+            "databaseFilePath": "D:\\repos\\CMS\\parquet\\Files\\Medicare_PartD.db"
+        }
+    ]
+}

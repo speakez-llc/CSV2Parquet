@@ -1,0 +1,52 @@
+StateFIPS,StateAbbreviation,StateName,RegionShort,RegionLong
+01,AL,Alabama,SE,Southeast
+02,AK,Alaska,NW,Northwest
+04,AZ,Arizona,SW,Southwest
+05,AR,Arkansas,SE,Southeast
+06,CA,California,SW,Southwest
+08,CO,Colorado,SW,Southwest
+09,CT,Connecticut,NE,Northeast
+10,DE,Delaware,NE,Northeast
+11,DC,District of Columbia,NE,Northeast
+12,FL,Florida,SE,Southeast
+13,GA,Georgia,SE,Southeast
+15,HI,Hawaii,W,West
+16,ID,Idaho,NW,Northwest
+17,IL,Illinois,MW,Midwest
+18,IN,Indiana,MW,Midwest
+19,IA,Iowa,MW,Midwest
+20,KS,Kansas,MW,Midwest
+21,KY,Kentucky,SE,Southeast
+22,LA,Louisiana,SE,Southeast
+23,ME,Maine,NE,Northeast
+24,MD,Maryland,NE,Northeast
+25,MA,Massachusetts,NE,Northeast
+26,MI,Michigan,MW,Midwest
+27,MN,Minnesota,MW,Midwest
+28,MS,Mississippi,SE,Southeast
+29,MO,Missouri,MW,Midwest
+30,MT,Montana,NW,Northwest
+31,NE,Nebraska,MW,Midwest
+32,NV,Nevada,SW,Southwest
+33,NH,New Hampshire,NE,Northeast
+34,NJ,New Jersey,NE,Northeast
+35,NM,New Mexico,SW,Southwest
+36,NY,New York,NE,Northeast
+37,NC,North Carolina,SE,Southeast
+38,ND,North Dakota,MW,Midwest
+39,OH,Ohio,MW,Midwest
+40,OK,Oklahoma,SW,Southwest
+41,OR,Oregon,NW,Northwest
+42,PA,Pennsylvania,NE,Northeast
+44,RI,Rhode Island,NE,Northeast
+45,SC,South Carolina,SE,Southeast
+46,SD,South Dakota,MW,Midwest
+47,TN,Tennessee,SE,Southeast
+48,TX,Texas,SW,Southwest
+49,UT,Utah,SW,Southwest
+50,VT,Vermont,NE,Northeast
+51,VA,Virginia,SE,Southeast
+53,WA,Washington,NW,Northwest
+54,WV,West Virginia,SE,Southeast
+55,WI,Wisconsin,MW,Midwest
+56,WY,Wyoming,NW,Northwest
