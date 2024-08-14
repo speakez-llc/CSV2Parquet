@@ -1,6 +1,6 @@
 # CSV2Parquet console utility
 
-This console app reads through a series of CSV files and performs column and row-level enrichments before outputting to parquet format. Part of the goal is to make the data more transportable. There's a level of "natural" compression that occurs with the standard "Snappy" compression - aside from the parquet format itself - being a mix of column and row-store to reduce unnecessary repetition of values in files. In the case here with CMS Medicare Part D data the ratio was about 6:1 reduction - from 32GB of data to about 5.9 or so before adding calculated columns. With the new calculated columns, which have a high cardinality - the reduction was closer to 3:1. But any reduced multiple is a good multiple when it comes to data movement - and if I was more sensitive to it I would do more to extract dimensional data and GZip the files on output. Just imposing order on the data to this level was good enough for this project and scope of data.
+This console app reads through a series of CSV files and performs column and row-level enrichments before outputting to parquet format. Part of the goal is to make the data more transportable. There's a level of "natural" compression that occurs with the standard "Snappy" compression - aside from the parquet format itself - being a mix of column and row-store to reduce unnecessary repetition of values in files. In the case here with CMS Medicare Part D data the ratio was about 6:1 reduction - from 32GB of data to about 5.9 or so before adding calculated columns. With the new calculated columns, which have a high cardinality - the reduction was closer to 3:1. But any reduced multiple is a good multiple when it comes to data movement - and if I was more sensitive to it I would do more to extract dimensional data and GZip the files on output. Just imposing order to this level was good enough for this project and scope of data.
 
 ## DuckDB
 
@@ -32,7 +32,7 @@ While in our case it was more convenient to create this as a local console app o
 
 ### Visual storytelling
 
-To familiarize ourselves with the CMS data we went created a PowerBI dashboard that approximates the report shown in the original sample project. The historical data had some surprises in it, and will be something we'll explore more deeply with our own reporting framework. Such as it is, this provides a useful first-blush view of the data.
+To familiarize ourselves with the CMS data we created a PowerBI dashboard that approximates the report shown in the original sample project. The historical data had some surprises in it, and will be something we'll explore more deeply with our own reporting framework. Such as it is, this provides a useful first-blush view of the data.
 
 ![alt text](<img/Screenshot 2024-08-12 205619.png>)
 
