@@ -6,6 +6,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.fs" />
+    <Content Include="opioids.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="locations.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="prescribers.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DuckDB.NET.Data.Full" Version="1.0.2" />
