@@ -1,6 +1,6 @@
 # Define the input and output file paths
-$inputFile = "D:\repos\CMS\parquet\Files\Medicare_Part_D_Prescribers_by_Provider_and_Drug_2013.csv"
-$outputFile = "D:\repos\CMS\parquet\out.csv"
+$inputFile = "D:\CMS\parquet\Files\Medicare_Part_D_Prescribers_by_Provider_and_Drug_2013.csv"
+$outputFile = "D:\CMS\parquet\sample.csv"
 
 try {
     # Initialize StreamReader to read the input file
