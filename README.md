@@ -36,4 +36,4 @@ To familiarize ourselves with the CMS data we created a PowerBI dashboard that a
 
 ![alt text](<img/Screenshot 2024-08-12 205619.png>)
 
-As mentioned above. If a notebook approach was used, many of these visuals could be build in-line and the data exploration could proceed from there. In either case, DuckDB and the .NET wrapper we've used provides a fast, efficient method of inspecting and processing unstructured data into a compact and useful format.
+As mentioned above. If a notebook approach was used, many of these visuals could be built in-line and the data exploration could proceed from there. In either case, DuckDB and the .NET wrapper we've used provides a fast, efficient method of inspecting and processing unstructured data into a compact and useful format.
