@@ -20,7 +20,7 @@ When building out this process initially, we needed faster initial load of data 
 
 There's a few additional "windows of opportunity" beyond simple file processing. For longer-form data-centric projects the DX experience can go further by mounting those generated files as a DuckDB instance and make it available to your editor/IDE of choice. Both VSCode and JetBrains Rider have DuckDB connection extensions that allow you to query that data within the environment.
 
-![alt text](<img/Screenshot 2024-08-11 195048.png>)
+![alt text](<img/Screenshot 2024-08-22 083131.png>)
 
 But beyond that, that connection can also be used to provide syntax/type checks for those Postgres-like queries that are in-inlined in the code. So you can essentially treat that "flat" data as any other data store.
 
