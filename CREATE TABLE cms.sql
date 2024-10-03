@@ -1,0 +1,20 @@
+CREATE TABLE cms (
+    Prscrbr_Type VARCHAR,
+    Prscrbr_Type_Src VARCHAR,
+    Brnd_Name VARCHAR,
+    Gnrc_Name VARCHAR,
+    Tot_Clms BIGINT,
+    Tot_30day_Fills DOUBLE PRECISION,
+    Tot_Day_Suply BIGINT,
+    Tot_Drug_Cst DOUBLE PRECISION,
+    Tot_Benes BIGINT,
+    GE65_Tot_Clms BIGINT,
+    GE65_Tot_30day_Fills DOUBLE PRECISION,
+    GE65_Tot_Drug_Cst DOUBLE PRECISION,
+    GE65_Tot_Day_Suply BIGINT,
+    GE65_Tot_Benes BIGINT,
+    PRESCRIBER_ID BIGINT,
+    YEAR INTEGER,
+    LOCATION_ID BIGINT,
+    IS_OPIOID BOOLEAN
+);
