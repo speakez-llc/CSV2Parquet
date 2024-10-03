@@ -17,14 +17,14 @@ let loadCsvIntoDuckDB (connection: DuckDBConnection) (tableName: string) (filePa
 let addNewColumns (connection: DuckDBConnection) (year: string) =
     let command = connection.CreateCommand()
     command.CommandText <- $"""
-        ALTER TABLE CMS ADD COLUMN PRESCRIBER_ID int64;
         ALTER TABLE CMS ADD COLUMN TOT_COSTS_PER_DAY decimal;
         ALTER TABLE CMS ADD COLUMN TOT_COSTS_PER_CLAIM decimal;
         ALTER TABLE CMS ADD COLUMN GE65_TOT_COSTS_PER_DAY decimal;
         ALTER TABLE CMS ADD COLUMN GE65_TOT_COSTS_PER_CLAIM decimal;
+        ALTER TABLE CMS ADD COLUMN PRESCRIBER_ID int64;
         ALTER TABLE CMS ADD COLUMN LOCATION_ID int64;
-        ALTER TABLE CMS ADD COLUMN IS_OPIOID BOOLEAN DEFAULT null;
-        ALTER TABLE CMS ADD COLUMN YEAR DATE DEFAULT CAST '{year}' AS DATE;
+        ALTER TABLE CMS ADD COLUMN MEDICATION_ID int64;
+        ALTER TABLE CMS ADD COLUMN YEAR DATE DEFAULT DATE '{year}-01-01';
     """
     printfn "Adding new columns to CMS table"
     command.ExecuteNonQuery() |> ignore
@@ -83,16 +83,15 @@ let calculateGe65TotalCostsPerClaim (connection: DuckDBConnection) =
     printfn "Calculating GE65_TOT_COSTS_PER_CLAIM column in CMS table"
     command.ExecuteNonQuery() |> ignore
 
-let updateIsOpioidColumn (connection: DuckDBConnection) =
+let updateMedicationId (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
         UPDATE CMS
-            SET IS_OPIOID = true
-            FROM OPIOIDS
-            WHERE UPPER(CMS.Brnd_Name) = UPPER(OPIOIDS.Drug_Name)
-            OR UPPER(CMS.Gnrc_Name) = UPPER(OPIOIDS.Generic_Name);
+            SET MEDICATION_ID = MEDICATIONS.ID
+            FROM MEDICATIONS
+            WHERE UPPER(CMS.Brnd_Name) = UPPER(MEDICATIONS.Brnd_Name);
     """
-    printfn "Updating IS_OPIOID column in CMS table"
+    printfn "Updating MEDICATION_ID column in CMS table"
     command.ExecuteNonQuery() |> ignore
     
 let updatePrescriberIdColumn (connection: DuckDBConnection) =
@@ -114,6 +113,8 @@ let removeUnneededColumns (connection: DuckDBConnection) =
         "Prscrbr_City"
         "Prscrbr_State_Abrvtn"
         "Prscrbr_State_FIPS"
+        "Brnd_Name"
+        "Gnrc_Name"
         "GE65_Bene_Sprsn_Flag"
         "GE65_Sprsn_Flag"
     ]
@@ -145,7 +146,7 @@ let fileDict =
 
 let loadSupportTables (connection: DuckDBConnection) =
     loadCsvIntoDuckDB connection "LOCATIONS" (fileInputPath + "locations.csv")
-    loadCsvIntoDuckDB connection "OPIOIDS" (fileInputPath + "opioids.csv")
+    loadCsvIntoDuckDB connection "MEDICATIONS" (fileInputPath + "dim_medications.csv")
     loadCsvIntoDuckDB connection "PRESCRIBERS" (fileInputPath + "prescribers.csv")
 
 
@@ -164,9 +165,9 @@ let runTasksInSeries (fileDict: IDictionary<int, string>) connection =
         calculateGe65TotalCostsPerDay connection
         updatePrescriberIdColumn connection
         updateLocationIdColumn connection
+        updateMedicationId connection
         removeRowsWhereLocationIdIs9s connection
         removeUnneededColumns connection
-        updateIsOpioidColumn connection
         writeParquetFile connection outputFilePath
 
 [<EntryPoint>]
