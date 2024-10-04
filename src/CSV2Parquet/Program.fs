@@ -68,6 +68,7 @@ let updatePrescriberIdColumn (connection: DuckDBConnection) =
 let removeUnneededColumns (connection: DuckDBConnection) =
     let columnsToDrop = [
         "Prscrbr_NPI"
+        "Prscrbr_Type_Src"
         "Prscrbr_Last_Org_Name"
         "Prscrbr_First_Name"
         "Prscrbr_City"
