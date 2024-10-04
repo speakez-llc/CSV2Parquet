@@ -502,3 +502,6 @@ src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2019.parquet
 src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2020.parquet
 src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2021.parquet
 src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2022.parquet
+src/CSV2Parquet/Files/parquet/medptd.db
+medptd.session.sql
+src/CSV2Parquet/Files/parquet/medptd.db.wal
