@@ -482,3 +482,23 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2013.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2014.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2015.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2016.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2017.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2018.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2019.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2020.csv
+src/CSV2Parquet/Files/Medicare_Part_D_Prescribers_by_Provider_and_Drug_2021.csv
+src/CSV2Parquet/Files/MUP_DPR_RY24_P04_V10_DY22_NPIBN.csv
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2013.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2014.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2015.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2016.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2017.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2018.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2019.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2020.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2021.parquet
+src/CSV2Parquet/Files/parquet/CMS_MedPtD_PbyPaD_2022.parquet

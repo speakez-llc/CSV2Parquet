@@ -17,10 +17,6 @@ let loadCsvIntoDuckDB (connection: DuckDBConnection) (tableName: string) (filePa
 let addNewColumns (connection: DuckDBConnection) (year: string) =
     let command = connection.CreateCommand()
     command.CommandText <- $"""
-        ALTER TABLE CMS ADD COLUMN TOT_COSTS_PER_DAY decimal;
-        ALTER TABLE CMS ADD COLUMN TOT_COSTS_PER_CLAIM decimal;
-        ALTER TABLE CMS ADD COLUMN GE65_TOT_COSTS_PER_DAY decimal;
-        ALTER TABLE CMS ADD COLUMN GE65_TOT_COSTS_PER_CLAIM decimal;
         ALTER TABLE CMS ADD COLUMN PRESCRIBER_ID int64;
         ALTER TABLE CMS ADD COLUMN LOCATION_ID int64;
         ALTER TABLE CMS ADD COLUMN MEDICATION_ID int64;
@@ -33,10 +29,10 @@ let updateLocationIdColumn (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
         UPDATE CMS
-            SET LOCATION_ID = LOCATIONS.ID
-            FROM LOCATIONS
-            WHERE UPPER(CMS.Prscrbr_City) = UPPER(LOCATIONS.CITY)
-            AND UPPER(CMS.Prscrbr_State_Abrvtn) = UPPER(LOCATIONS.STATE_CODE);
+            SET LOCATION_ID = DIM_LOCATIONS.ID
+            FROM DIM_LOCATIONS
+            WHERE UPPER(CMS.Prscrbr_City) = UPPER(DIM_LOCATIONS.CITY)
+            AND UPPER(CMS.Prscrbr_State_Abrvtn) = UPPER(DIM_LOCATIONS.STATE_CODE);
     """
     printfn "Updating LOCATION_ID column in CMS table"
     command.ExecuteNonQuery() |> ignore
@@ -47,49 +43,13 @@ let removeRowsWhereLocationIdIs9s (connection: DuckDBConnection) =
     printfn "Removing rows where LOCATION_ID is 99999"
     command.ExecuteNonQuery() |> ignore
 
-let calculateTotalCostsPerDay (connection: DuckDBConnection) =
-    let command = connection.CreateCommand()
-    command.CommandText <- """
-        UPDATE CMS
-            SET TOT_COSTS_PER_DAY = CMS.Tot_Drug_Cst / CMS.Tot_Day_Suply;
-    """
-    printfn "Calculating TOT_COSTS_PER_DAY column in CMS table"
-    command.ExecuteNonQuery() |> ignore
-    
-let calculateTotalCostsPerClaim (connection: DuckDBConnection) =
-    let command = connection.CreateCommand()
-    command.CommandText <- """
-        UPDATE CMS
-            SET TOT_COSTS_PER_CLAIM = CMS.Tot_Drug_Cst / CMS.Tot_Clms;
-    """
-    printfn "Calculating TOT_COSTS_PER_CLAIM column in CMS table"
-    command.ExecuteNonQuery() |> ignore
-
-let calculateGe65TotalCostsPerDay (connection: DuckDBConnection) =
-    let command = connection.CreateCommand()
-    command.CommandText <- """
-        UPDATE CMS
-            SET GE65_TOT_COSTS_PER_DAY = CMS.GE65_Tot_Drug_Cst / CMS.GE65_Tot_Day_Suply;
-    """
-    printfn "Calculating GE65_TOT_COSTS_PER_DAY column in CMS table"
-    command.ExecuteNonQuery() |> ignore
-    
-let calculateGe65TotalCostsPerClaim (connection: DuckDBConnection) =
-    let command = connection.CreateCommand()
-    command.CommandText <- """
-        UPDATE CMS
-            SET GE65_TOT_COSTS_PER_CLAIM = CMS.GE65_Tot_Drug_Cst / CMS.GE65_Tot_Clms;
-    """
-    printfn "Calculating GE65_TOT_COSTS_PER_CLAIM column in CMS table"
-    command.ExecuteNonQuery() |> ignore
-
 let updateMedicationId (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
         UPDATE CMS
-            SET MEDICATION_ID = MEDICATIONS.ID
-            FROM MEDICATIONS
-            WHERE UPPER(CMS.Brnd_Name) = UPPER(MEDICATIONS.Brnd_Name);
+            SET MEDICATION_ID = DIM_MEDICATIONS.ID
+            FROM DIM_MEDICATIONS
+            WHERE UPPER(CMS.Brnd_Name) = UPPER(DIM_MEDICATIONS.Brand_Name);
     """
     printfn "Updating MEDICATION_ID column in CMS table"
     command.ExecuteNonQuery() |> ignore
@@ -98,9 +58,9 @@ let updatePrescriberIdColumn (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
         UPDATE CMS
-            SET PRESCRIBER_ID = PRESCRIBERS.ID
-            FROM PRESCRIBERS
-            WHERE CMS.Prscrbr_NPI = PRESCRIBERS.Prscrbr_NPI;
+            SET PRESCRIBER_ID = DIM_PRESCRIBERS.ID
+            FROM DIM_PRESCRIBERS
+            WHERE CMS.Prscrbr_NPI = DIM_PRESCRIBERS.Prescriber_NPI;
     """
     printfn "Updating PRESCRIBER_ID column in CMS table"
     command.ExecuteNonQuery() |> ignore
@@ -124,6 +84,27 @@ let removeUnneededColumns (connection: DuckDBConnection) =
         printfn "Removing column %s from CMS table" column
         command.ExecuteNonQuery() |> ignore
 
+let columnNames = [
+    ("Prscrbr_Type", "Prescriber_Type")
+    ("Tot_Clms", "Total_Claims")
+    ("Tot_30Day_Fills", "Total_30Day_Fills")
+    ("Tot_Day_Suply", "Total_Day_Supply")
+    ("Tot_Drug_Cst", "Total_Drug_Cost")
+    ("Tot_Benes", "Total_Beneficiaries")
+    ("GE65_Tot_Clms", "Total_Claims_65_OrOlder")
+    ("GE65_Tot_30Day_Fills", "Total_30Day_Fills_65_OrOlder")
+    ("GE65_Tot_Day_Suply", "Total_Day_Supply_65_OrOlder")
+    ("GE65_Tot_Drug_Cst", "Total_Drug_Cost_65_OrOlder")
+    ("GE65_Tot_Benes", "Total_Beneficiaries_65_OrOlder")
+]
+
+let renameColumn (connection: DuckDBConnection) (columnNames: string * string) =
+    let (currentName, newName) = columnNames
+    let command = connection.CreateCommand()
+    command.CommandText <- $"ALTER TABLE CMS RENAME COLUMN {currentName} TO {newName};"
+    printfn "Renaming column %s to %s in CMS table" currentName newName
+    command.ExecuteNonQuery() |> ignore 
+
 let writeParquetFile (connection: DuckDBConnection) (outputFilePath: string) =
     let command = connection.CreateCommand()
     command.CommandText <- $"COPY (SELECT * FROM CMS) TO '{outputFilePath}' (FORMAT 'parquet');"
@@ -145,9 +126,9 @@ let fileDict =
     ]
 
 let loadSupportTables (connection: DuckDBConnection) =
-    loadCsvIntoDuckDB connection "LOCATIONS" (fileInputPath + "locations.csv")
-    loadCsvIntoDuckDB connection "MEDICATIONS" (fileInputPath + "dim_medications.csv")
-    loadCsvIntoDuckDB connection "PRESCRIBERS" (fileInputPath + "prescribers.csv")
+    loadCsvIntoDuckDB connection "DIM_LOCATIONS" (fileInputPath + "dim_locations.csv")
+    loadCsvIntoDuckDB connection "DIM_MEDICATIONS" (fileInputPath + "dim_medications.csv")
+    loadCsvIntoDuckDB connection "DIM_PRESCRIBERS" (fileInputPath + "dim_prescribers.csv")
 
 
 let runTasksInSeries (fileDict: IDictionary<int, string>) connection =
@@ -159,15 +140,13 @@ let runTasksInSeries (fileDict: IDictionary<int, string>) connection =
         let outputFilePath = fileOutputPath + $"CMS_MedPtD_PbyPaD_{year}.parquet"
         loadCsvIntoDuckDB connection "CMS" inputFilePath
         addNewColumns connection (year.ToString())
-        calculateTotalCostsPerClaim connection
-        calculateTotalCostsPerDay connection
-        calculateGe65TotalCostsPerClaim connection
-        calculateGe65TotalCostsPerDay connection
         updatePrescriberIdColumn connection
         updateLocationIdColumn connection
         updateMedicationId connection
         removeRowsWhereLocationIdIs9s connection
         removeUnneededColumns connection
+        for column in columnNames do
+            renameColumn connection column
         writeParquetFile connection outputFilePath
 
 [<EntryPoint>]

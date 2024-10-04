@@ -1,3 +1,10 @@
 {
-    "sqltools.connections": []
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "DuckDB",
+            "name": "medptd",
+            "database": "${workspaceFolder:CSV2Parquet}/src/CSV2Parquet/Files/parquet/medptd.db"
+        }
+    ]
 }

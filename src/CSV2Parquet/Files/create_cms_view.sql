@@ -1,0 +1,2 @@
+CREATE VIEW "CMS_VIEW" AS 
+    
