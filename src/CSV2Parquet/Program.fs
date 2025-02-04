@@ -14,55 +14,97 @@ let loadCsvIntoDuckDB (connection: DuckDBConnection) (tableName: string) (filePa
     printfn "Dropping and loading table %s into DuckDB" tableName
     command.ExecuteNonQuery() |> ignore
 
+let fixPrescriberTypes (connection: DuckDBConnection) =
+    let command = connection.CreateCommand()
+    command.CommandText <- """
+        UPDATE CMS
+            SET Prscrbr_Type = CASE
+                WHEN Prscrbr_Type = 'Allergy/ Immunology' THEN 'Allergy & Immunology'
+                WHEN Prscrbr_Type = 'Allergy/Immunology' THEN 'Allergy & Immunology'
+                WHEN Prscrbr_Type = 'Behavior Analyst' THEN 'Behavioral Analyst'
+                WHEN Prscrbr_Type = 'Clinical Cardiac Electrophysiology' THEN 'Clinical Cardiatric Electrophysiology'
+                WHEN Prscrbr_Type = 'Colorectal Surgery (formerly proctology)' THEN 'Colorectal Surgery (Proctology)'
+                WHEN Prscrbr_Type = 'Gynecological/Oncology' THEN 'Gynecological Oncology'
+                WHEN Prscrbr_Type = 'Hematology/Oncology' THEN 'Hematology-Oncology'
+                WHEN Prscrbr_Type = 'Obstetrics/Gynecology' THEN 'Obstetrics & Gynecology'
+                WHEN Prscrbr_Type = 'Oral Surgery (dentists only)' THEN 'Oral Surgery (Dentist only)'
+                WHEN Prscrbr_Type = 'Orthopaedic Surgery' THEN 'Orthopedic Surgery'
+                WHEN Prscrbr_Type = 'Physical Medicine and Rehabilitation' THEN 'Physical Medicine & Rehabilitation'
+                WHEN Prscrbr_Type = 'Plastic and Reconstructive Surgery' THEN 'Plastic & Reconstructive Surgery'
+                WHEN Prscrbr_Type = 'Registered Dietician/Nutrition Professional' THEN 'Registered Dietician or Nutrition Professional'
+                WHEN Prscrbr_Type = 'Specialist/Technologist, Health Information' THEN 'Specialist/Technologist'
+            END;
+    """
+    printfn "Fixing prescriber types in CMS table"
+    command.ExecuteNonQuery() |> ignore
+
+let removeNonUSEntries (connection: DuckDBConnection) =
+    let command = connection.CreateCommand()
+    command.CommandText <- """
+        delete from cms
+            where Prscrbr_State_Abrvtn not in (
+                select distinct state_code 
+                from dim_locations
+            );
+        """
+    printfn "Fixing non-US entries in CMS table"
+    command.ExecuteNonQuery() |> ignore
+
+
 let addNewColumns (connection: DuckDBConnection) (year: string) =
     let command = connection.CreateCommand()
     command.CommandText <- $"""
-        ALTER TABLE CMS ADD COLUMN PRESCRIBER_ID int64;
-        ALTER TABLE CMS ADD COLUMN LOCATION_ID int64;
-        ALTER TABLE CMS ADD COLUMN MEDICATION_ID int64;
-        ALTER TABLE CMS ADD COLUMN YEAR DATE DEFAULT DATE '{year}-01-01';
+        alter table cms add column prescriber_id int64;
+        alter table cms add column location_id int64;
+        alter table cms add column medication_id int64;
+        alter table cms add column year text;
     """
     printfn "Adding new columns to CMS table"
     command.ExecuteNonQuery() |> ignore
 
+let setYearColumn (connection: DuckDBConnection) (year: string) =
+    let cmd = connection.CreateCommand()
+    cmd.CommandText <- $"UPDATE cms SET year = '{year}';"
+    cmd.ExecuteNonQuery() |> ignore
+
 let updateLocationIdColumn (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
-        UPDATE CMS
-            SET LOCATION_ID = DIM_LOCATIONS.ID
-            FROM DIM_LOCATIONS
-            WHERE UPPER(CMS.Prscrbr_City) = UPPER(DIM_LOCATIONS.CITY)
-            AND UPPER(CMS.Prscrbr_State_Abrvtn) = UPPER(DIM_LOCATIONS.STATE_CODE);
+        update cms
+            set location_id = dim_locations.id
+            from dim_locations
+            where upper(cms.prscrbr_city) = upper(dim_locations.city)
+            and upper(cms.prscrbr_state_abrvtn) = upper(dim_locations.state_code);
     """
-    printfn "Updating LOCATION_ID column in CMS table"
+    printfn "updating location_id column in cms table"
     command.ExecuteNonQuery() |> ignore
 
-let removeRowsWhereLocationIdIs9s (connection: DuckDBConnection) =
+let removeRowsWhereLocationIdIsBlank (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
-    command.CommandText <- "DELETE FROM CMS WHERE LOCATION_ID = '99999';"
-    printfn "Removing rows where LOCATION_ID is 99999"
+    command.CommandText <- "delete from cms where Location_Id IS NULL;"
+    printfn "removing rows where Location_Id is blank"
     command.ExecuteNonQuery() |> ignore
 
 let updateMedicationId (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
-        UPDATE CMS
-            SET MEDICATION_ID = DIM_MEDICATIONS.ID
-            FROM DIM_MEDICATIONS
-            WHERE UPPER(CMS.Brnd_Name) = UPPER(DIM_MEDICATIONS.Brand_Name);
+        update cms
+            set medication_id = dim_medications.id
+            from dim_medications
+            where cms.brnd_name = dim_medications.brand_name;
     """
-    printfn "Updating MEDICATION_ID column in CMS table"
+    printfn "updating medication_id column in cms table"
     command.ExecuteNonQuery() |> ignore
     
 let updatePrescriberIdColumn (connection: DuckDBConnection) =
     let command = connection.CreateCommand()
     command.CommandText <- """
-        UPDATE CMS
-            SET PRESCRIBER_ID = DIM_PRESCRIBERS.ID
-            FROM DIM_PRESCRIBERS
-            WHERE CMS.Prscrbr_NPI = DIM_PRESCRIBERS.Prescriber_NPI;
+        update cms
+            set prescriber_id = dim_prescribers.id
+            from dim_prescribers
+            where cms.Prscrbr_NPI = dim_prescribers.prescriber_npi;
     """
-    printfn "Updating PRESCRIBER_ID column in CMS table"
+    printfn "updating prescriber_id column in cms table"
     command.ExecuteNonQuery() |> ignore
 
 let removeUnneededColumns (connection: DuckDBConnection) =
@@ -81,58 +123,111 @@ let removeUnneededColumns (connection: DuckDBConnection) =
     ]
     for column in columnsToDrop do
         let command = connection.CreateCommand()
-        command.CommandText <- $"ALTER TABLE CMS DROP COLUMN {column};"
-        printfn "Removing column %s from CMS table" column
+        command.CommandText <- $"ALTER TABLE cms DROP COLUMN {column};"
+        printfn "Removing column %s from cms table" column
         command.ExecuteNonQuery() |> ignore
 
 let columnNames = [
-    ("Prscrbr_Type", "Prescriber_Type")
-    ("Tot_Clms", "Total_Claims")
-    ("Tot_30Day_Fills", "Total_30Day_Fills")
-    ("Tot_Day_Suply", "Total_Day_Supply")
-    ("Tot_Drug_Cst", "Total_Drug_Cost")
-    ("Tot_Benes", "Total_Beneficiaries")
-    ("GE65_Tot_Clms", "Total_Claims_65_OrOlder")
-    ("GE65_Tot_30Day_Fills", "Total_30Day_Fills_65_OrOlder")
-    ("GE65_Tot_Day_Suply", "Total_Day_Supply_65_OrOlder")
-    ("GE65_Tot_Drug_Cst", "Total_Drug_Cost_65_OrOlder")
-    ("GE65_Tot_Benes", "Total_Beneficiaries_65_OrOlder")
+    ("Prscrbr_Type", "prescriber_type")
+    ("Tot_Clms", "total_claims_under_65")
+    ("Tot_30Day_Fills", "total_30_day_fills_under_65")
+    ("Tot_Day_Suply", "total_day_supply_under_65")
+    ("Tot_Drug_Cst", "total_drug_cost_under_65")
+    ("Tot_Benes", "total_beneficiaries_under_65")
+    ("GE65_Tot_Clms", "total_claims_65_or_older")
+    ("GE65_Tot_30Day_Fills", "total_30_day_fills_65_or_older")
+    ("GE65_Tot_Day_Suply", "total_day_supply_65_or_older")
+    ("GE65_Tot_Drug_Cst", "total_drug_cost_65_or_older")
+    ("GE65_Tot_Benes", "total_beneficiaries_65_or_older")
 ]
 
 let renameColumn (connection: DuckDBConnection) (columnNames: string * string) =
     let (currentName, newName) = columnNames
     let command = connection.CreateCommand()
-    command.CommandText <- $"ALTER TABLE CMS RENAME COLUMN {currentName} TO {newName};"
-    printfn "Renaming column %s to %s in CMS table" currentName newName
+    command.CommandText <- $"ALTER TABLE cms RENAME COLUMN {currentName} TO {newName};"
+    printfn "Renaming column %s to %s in cms table" currentName newName
     command.ExecuteNonQuery() |> ignore 
 
-let writeParquetFile (connection: DuckDBConnection) (outputFilePath: string) =
+let lowerCaseAllColumns (connection: DuckDBConnection) (tableName: string) =
+    // Get all column names
     let command = connection.CreateCommand()
-    command.CommandText <- $"COPY (SELECT * FROM CMS) TO '{outputFilePath}' (FORMAT 'parquet');"
-    printfn "Writing parquet file to %s" outputFilePath
+    command.CommandText <- $"""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = '{tableName}'
+    """
+    
+    use reader = command.ExecuteReader()
+    let columns = [
+        while reader.Read() do
+            yield reader.GetString(0)
+    ]
+    
+    // Rename each column to lowercase
+    for column in columns do
+        let lowerName = column.ToLower()
+        if column <> lowerName then
+            let renameCmd = connection.CreateCommand()
+            renameCmd.CommandText <- $"ALTER TABLE {tableName} RENAME COLUMN {column} TO {lowerName};"
+            printfn "Renaming column %s to %s in %s table" column lowerName tableName
+            renameCmd.ExecuteNonQuery() |> ignore
+
+let writeParquetFileByRegion (connection: DuckDBConnection) (baseOutputPath: string) (regions: string list) (suffix: string) =
+    let regionsStr = regions |> List.map (sprintf "'%s'") |> String.concat ","
+    let command = connection.CreateCommand()
+    let outputPath = baseOutputPath.Replace(".parquet", $"_{suffix}.parquet")
+    
+    command.CommandText <- $"""
+        COPY (
+            SELECT cms.* 
+            FROM cms 
+            JOIN dim_locations ON cms.location_id = dim_locations.id 
+            WHERE dim_locations.region IN ({regionsStr})
+        ) TO '{outputPath}' (FORMAT 'parquet');
+    """
+    
+    printfn "Writing parquet file to %s" outputPath
     command.ExecuteNonQuery() |> ignore
+
+let processAllRegions (connection: DuckDBConnection) (outputFilePath: string) =
+    // Individual region passes
+    let singleRegionPasses = [
+        (["South"], "South")
+        (["Northeast"], "Northeast")
+        (["Midwest"], "Midwest")
+        (["West"], "West")
+    ]
+    
+    // Process individual regions
+    for (regions, suffix) in singleRegionPasses do
+        writeParquetFileByRegion connection outputFilePath regions suffix
+        
+    // Process all regions together
+    let allRegions = ["South"; "Northeast"; "Midwest"; "West"]
+    writeParquetFileByRegion connection outputFilePath allRegions "US"
 
 let fileDict =
     dict [
-        2013, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2013.csv"
-        2014, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2014.csv"
-        2015, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2015.csv"
-        2016, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2016.csv"
-        2017, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2017.csv"
-        2018, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2018.csv"
-        2019, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2019.csv"
-        2020, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2020.csv"
-        2021, "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2021.csv"
-        2022, "MUP_DPR_RY24_P04_V10_DY22_NPIBN.csv"
+        "2013", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2013.csv"
+        "2014", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2014.csv"
+        "2015", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2015.csv"
+        "2016", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2016.csv"
+        "2017", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2017.csv"
+        "2018", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2018.csv"
+        "2019", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2019.csv"
+        "2020", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2020.csv"
+        "2021", "Medicare_Part_D_Prescribers_by_Provider_and_Drug_2021.csv"
+        "2022", "MUP_DPR_RY24_P04_V10_DY22_NPIBN.csv"
     ]
 
 let loadSupportTables (connection: DuckDBConnection) =
-    loadCsvIntoDuckDB connection "DIM_LOCATIONS" (fileInputPath + "dim_locations.csv")
-    loadCsvIntoDuckDB connection "DIM_MEDICATIONS" (fileInputPath + "dim_medications.csv")
-    loadCsvIntoDuckDB connection "DIM_PRESCRIBERS" (fileInputPath + "dim_prescribers.csv")
+    loadCsvIntoDuckDB connection "dim_locations" (fileInputPath + "dim_locations.csv")
+    loadCsvIntoDuckDB connection "dim_medications" (fileInputPath + "dim_medications.csv")
+    loadCsvIntoDuckDB connection "dim_prescribers" (fileInputPath + "dim_prescribers.csv")
 
 
-let runTasksInSeries (fileDict: IDictionary<int, string>) connection =
+
+let runTasksInSeries (fileDict: IDictionary<string, string>) connection =
     loadSupportTables connection
     for kvp in fileDict do
         let year = kvp.Key
@@ -140,15 +235,19 @@ let runTasksInSeries (fileDict: IDictionary<int, string>) connection =
         let inputFilePath = fileInputPath + fileName
         let outputFilePath = fileOutputPath + $"CMS_MedPtD_PbyPaD_{year}.parquet"
         loadCsvIntoDuckDB connection "CMS" inputFilePath
-        addNewColumns connection (year.ToString())
+        fixPrescriberTypes connection
+        removeNonUSEntries connection
+        addNewColumns connection (year)
+        setYearColumn connection (year)
         updatePrescriberIdColumn connection
         updateLocationIdColumn connection
+        removeRowsWhereLocationIdIsBlank connection
         updateMedicationId connection
-        removeRowsWhereLocationIdIs9s connection
         removeUnneededColumns connection
         for column in columnNames do
             renameColumn connection column
-        writeParquetFile connection outputFilePath
+        lowerCaseAllColumns connection "cms"
+        processAllRegions connection outputFilePath
 
 [<EntryPoint>]
 let main argv =

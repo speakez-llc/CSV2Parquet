@@ -1,13 +1,13 @@
-CREATE OR REPLACE VIEW "CMS_VIEW" AS 
+CREATE OR REPLACE VIEW "cms_view" AS 
 SELECT 
     *,
-    Total_Drug_Cost / Total_Day_Supply AS Total_Drug_Cost_Per_Day,
-    Total_Drug_Cost_65_OrOlder / Total_Day_Supply_65_OrOlder AS Total_Drug_Cost_Per_Day_65_OrOlder,
-    Total_Drug_Cost / Total_Claims AS Total_Cost_Per_Claim,
-    Total_Drug_Cost_65_OrOlder / Total_CLaims_65_OrOlder AS Total_Cost_Per_Claim_65_OrOlder,
-    Total_Drug_Cost / Total_Beneficiaries AS Total_Cost_Per_Beneficiary,
-    Total_Drug_Cost_65_OrOlder / Total_Beneficiaries_65_OrOlder AS Total_Cost_Per_Beneficiary_65_OrOlder,
-    Total_30_Day_Fills / Total_Beneficiaries AS Total_30_Day_Fills_Per_Beneficiary,
-    Total_30_Day_Fills_65_OrOlder / Total_Beneficiaries_65_OrOlder AS Total_30_Day_Fills_Per_Beneficiary_65_OrOlder
+    total_drug_cost_under_65 / total_day_supply_under_65 as total_drug_cost_per_day_under_65,
+    total_drug_cost_65_or_older / total_day_supply_65_or_older as total_drug_cost_per_day_65_or_older,
+    total_drug_cost_under_65 / total_claims_under_65 as total_cost_per_claim_under_65,
+    total_drug_cost_65_or_older / total_claims_65_or_older as total_cost_per_claim_65_or_older,
+    total_drug_cost_under_65 / total_beneficiaries_under_65 as total_cost_per_beneficiary_under_65,
+    total_drug_cost_65_or_older / total_beneficiaries_65_or_older as total_cost_per_beneficiary_65_or_older,
+    total_30_day_fills_under_65 / total_beneficiaries_under_65 as total_30_day_fills_per_beneficiary_under_65,
+    total_30_day_fills_65_or_older / total_beneficiaries_65_or_older as total_30_day_fills_per_beneficiary_65_or_older
 FROM 
-    CMS;
+    cms;
